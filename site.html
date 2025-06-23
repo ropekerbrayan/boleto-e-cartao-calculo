@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Taxas - Boleto e Cartão</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Using the Inter font for a more modern look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* A slightly softer gray */
+        }
+        /* Ensure the result area has a minimum height on large screens */
+        @media (min-width: 1024px) {
+            #resultado-container {
+                min-height: 520px;
+            }
+        }
+        /* Hide elements smoothly */
+        .hidden-form {
+            display: none;
+        }
+        /* Simple fade-in animation for results */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Main container, wider for the new layout -->
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl w-full max-w-6xl">
+        <!-- Main grid dividing the layout into two columns on large screens -->
+        <div class="lg:grid lg:grid-cols-2 lg:gap-12">
+            
+            <!-- Left Column: Input Forms -->
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Calculadora de Taxas</h1>
+
+                <!-- Calculator Type Selector -->
+                <div class="mb-6">
+                    <div class="flex border-b border-gray-200">
+                        <button id="btn-cartao" onclick="switchCalculator('cartao')" class="w-full py-3 px-4 font-semibold text-sm text-center border-b-2 border-blue-600 text-blue-600">
+                            Cartão
+                        </button>
+                        <button id="btn-boleto" onclick="switchCalculator('boleto')" class="w-full py-3 px-4 font-semibold text-sm text-center border-b-2 border-transparent text-gray-500 hover:text-blue-600">
+                            Boleto Atrasado
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card Calculator Form -->
+                <form id="form-cartao" onsubmit="calcularCartao(event)">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div class="form-group">
+                            <label for="nb-cartao" class="block text-sm font-semibold text-gray-700 mb-1">NB do Cliente:</label>
+                            <input type="number" id="nb-cartao" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="nota-cartao" class="block text-sm font-semibold text-gray-700 mb-1">Número da Nota:</label>
+                            <input type="number" id="nota-cartao" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required>
+                        </div>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="mapa" class="block text-sm font-semibold text-gray-700 mb-1">Mapa do Cliente:</label>
+                        <input type="number" id="mapa" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="valor-cartao" class="block text-sm font-semibold text-gray-700 mb-1">Valor da Nota (R$):</label>
+                        <input type="number" id="valor-cartao" step="0.01" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Ex: 150.50" required>
+                    </div>
+                    <div class="form-group mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Forma de Pagamento:</label>
+                        <div class="flex items-center space-x-6">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="radio" name="tipo" value="credito" class="h-5 w-5 text-blue-600 focus:ring-blue-500" required>
+                                <span class="text-gray-800">Crédito</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="radio" name="tipo" value="debito" class="h-5 w-5 text-blue-600 focus:ring-blue-500">
+                                <span class="text-gray-800">Débito</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-3 px-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-transform transform hover:scale-105">
+                        Calcular Taxa do Cartão
+                    </button>
+                </form>
+
+                <!-- Boleto Calculator Form -->
+                <form id="form-boleto" class="hidden-form" onsubmit="calcularBoleto(event)">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div class="form-group">
+                             <label for="nb-boleto" class="block text-sm font-semibold text-gray-700 mb-1">NB do Cliente:</label>
+                            <input type="number" id="nb-boleto" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required>
+                        </div>
+                        <div class="form-group">
+                             <label for="nota-boleto" class="block text-sm font-semibold text-gray-700 mb-1">Número da Nota:</label>
+                            <input type="number" id="nota-boleto" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required>
+                        </div>
+                    </div>
+                     <div class="form-group mb-4">
+                        <label for="quantidade-boletos" class="block text-sm font-semibold text-gray-700 mb-1">Quantidade de Boletos:</label>
+                        <input type="number" id="quantidade-boletos" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" value="1" required>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="valor-boleto" class="block text-sm font-semibold text-gray-700 mb-1">Valor da Nota (R$):</label>
+                        <input type="number" id="valor-boleto" step="0.01" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Ex: 150.50" required>
+                    </div>
+                    <div class="form-group mb-6">
+                        <label for="vencimento" class="block text-sm font-semibold text-gray-700 mb-1">Data de Vencimento:</label>
+                        <input type="date" id="vencimento" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required>
+                    </div>
+                    <button type="submit" class="w-full py-3 px-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-transform transform hover:scale-105">
+                        Calcular Juros do Boleto
+                    </button>
+                </form>
+
+            </div>
+
+            <!-- Right Column: Results Area -->
+            <div id="resultado-container" class="mt-8 lg:mt-0 lg:border-l lg:pl-12 border-gray-200 flex flex-col justify-center">
+                 <div id="resultado">
+                    <!-- Initial placeholder for the results area -->
+                    <div class="text-center text-gray-500">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                          <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">Aguardando cálculo</h3>
+                        <p class="mt-1 text-sm text-gray-500">Preencha os dados e clique em calcular para ver o resultado.</p>
+                    </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const formCartao = document.getElementById('form-cartao');
+        const formBoleto = document.getElementById('form-boleto');
+        const btnCartao = document.getElementById('btn-cartao');
+        const btnBoleto = document.getElementById('btn-boleto');
+        const resultadoDiv = document.getElementById('resultado');
+
+        /**
+         * Switches between the card and boleto calculator views.
+         * @param {string} calculatorType - 'cartao' or 'boleto'.
+         */
+        function switchCalculator(calculatorType) {
+            if (calculatorType === 'cartao') {
+                formCartao.classList.remove('hidden-form');
+                formBoleto.classList.add('hidden-form');
+                btnCartao.classList.add('border-blue-600', 'text-blue-600');
+                btnCartao.classList.remove('border-transparent', 'text-gray-500');
+                btnBoleto.classList.add('border-transparent', 'text-gray-500');
+                btnBoleto.classList.remove('border-blue-600', 'text-blue-600');
+            } else {
+                formBoleto.classList.remove('hidden-form');
+                formCartao.classList.add('hidden-form');
+                btnBoleto.classList.add('border-blue-600', 'text-blue-600');
+                btnBoleto.classList.remove('border-transparent', 'text-gray-500');
+                btnCartao.classList.add('border-transparent', 'text-gray-500');
+                btnCartao.classList.remove('border-blue-600', 'text-blue-600');
+            }
+             // Reset result area when switching
+            clearResult();
+        }
+
+        /**
+         * Clears the result area and shows the placeholder.
+         */
+        function clearResult() {
+             resultadoDiv.innerHTML = `
+                <div class="text-center text-gray-500">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">Aguardando cálculo</h3>
+                    <p class="mt-1 text-sm text-gray-500">Preencha os dados e clique em calcular para ver o resultado.</p>
+                </div>`;
+        }
+        
+        // --- CALCULATION LOGIC ---
+
+        const formatarMoeda = (num) => num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        /**
+         * Calculates card fees based on user input.
+         * @param {Event} event - The form submission event.
+         */
+        function calcularCartao(event) {
+            event.preventDefault();
+
+            const nb = document.getElementById('nb-cartao').value;
+            const nota = document.getElementById('nota-cartao').value;
+            const mapa = document.getElementById('mapa').value;
+            const valor = parseFloat(document.getElementById('valor-cartao').value);
+            const tipoSelecionado = document.querySelector('input[name="tipo"]:checked');
+
+            if (!tipoSelecionado) {
+                 showError("Por favor, selecione a forma de pagamento (Crédito ou Débito).");
+                 return;
+            }
+            
+            const tipo = tipoSelecionado.value;
+            let juros = 0;
+            let tipoPagamentoLabel = "";
+
+            if (tipo === 'credito') {
+                juros = valor * 0.0149;
+                tipoPagamentoLabel = "Total Crédito";
+            } else if (tipo === 'debito') {
+                juros = valor * 0.0075;
+                tipoPagamentoLabel = "Total Débito";
+            }
+
+            const valorFinal = Math.ceil((valor + juros) * 100) / 100;
+            
+            // Generate result list
+            const resultItems = [
+                { label: 'NB', value: nb },
+                { label: 'Nota', value: nota },
+                { label: 'Mapa', value: mapa },
+                { label: 'Valor Original', value: formatarMoeda(valor) },
+                { label: `Juros (${tipo})`, value: formatarMoeda(juros), isFee: true },
+            ];
+
+            const totalItem = { label: tipoPagamentoLabel, value: formatarMoeda(valorFinal) };
+
+            displayResult('Resultado do Cálculo (Cartão)', resultItems, totalItem);
+        }
+
+        /**
+         * Calculates late boleto fees based on user input.
+         * @param {Event} event - The form submission event.
+         */
+        function calcularBoleto(event) {
+            event.preventDefault();
+
+            const nb = document.getElementById('nb-boleto').value;
+            const nota = document.getElementById('nota-boleto').value;
+            const quantidade = parseInt(document.getElementById('quantidade-boletos').value);
+            const valor = parseFloat(document.getElementById('valor-boleto').value);
+            const vencimentoStr = document.getElementById('vencimento').value;
+
+            if (!vencimentoStr) {
+                showError("Por favor, informe a data de vencimento.");
+                return;
+            }
+
+            // JavaScript handles timezone offset, so we need to create dates in UTC to get a clean day difference.
+            const t_vencimento = new Date(vencimentoStr + 'T00:00:00Z');
+            const t_atual = new Date();
+            // Reset time part of current date to compare days only
+            t_atual.setUTCHours(0, 0, 0, 0);
+
+            const diferencaMs = t_atual.getTime() - t_vencimento.getTime();
+            const diasAtraso = Math.floor(diferencaMs / (1000 * 60 * 60 * 24));
+
+            if (diasAtraso > 0) {
+                // Boleto is overdue
+                const custoBoletos = quantidade * 3.50;
+                const multa = valor * 0.02; // 2% fine
+                // UPDATED: This interest calculation matches the new logic from the C code.
+                const juros = 0.0033 * (valor * diasAtraso) / 2.0;
+                const totalBoleto = valor + multa + juros + custoBoletos;
+
+                const resultItems = [
+                    { label: 'NB', value: nb },
+                    { label: 'Nota', value: nota },
+                    { label: 'Valor Original', value: formatarMoeda(valor) },
+                    { label: `Dias em Atraso`, value: diasAtraso },
+                    { label: 'Multa (2%)', value: formatarMoeda(multa), isFee: true },
+                    { label: 'Juros por Atraso', value: formatarMoeda(juros), isFee: true },
+                    { label: `Custo Boletos (${quantidade}x)`, value: formatarMoeda(custoBoletos), isFee: true },
+                ];
+                const totalItem = { label: 'Total a Pagar', value: formatarMoeda(totalBoleto) };
+
+                displayResult('Resultado do Cálculo (Boleto)', resultItems, totalItem);
+
+            } else if (diasAtraso < 0) {
+                // Boleto is not yet due
+                showInfo(`Seu boleto ainda não venceu! Faltam ${-diasAtraso} dia(s) para o vencimento.`);
+            } else {
+                // Boleto is due today
+                showInfo('Seu boleto vence hoje! Efetue o pagamento para evitar juros e multas.');
+            }
+        }
+        
+        // --- DISPLAY FUNCTIONS ---
+
+        /**
+         * Displays the final calculation results in a structured format.
+         * @param {string} title - The title for the result card.
+         * @param {Array<Object>} items - An array of objects with {label, value, isFee?}.
+         * @param {Object} total - An object with {label, value} for the final total.
+         */
+        function displayResult(title, items, total) {
+            let itemsHtml = items.map(item => `
+                <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                    <span class="font-semibold text-gray-600">${item.label}</span>
+                    <span class="font-mono ${item.isFee ? 'text-red-600' : 'text-gray-900'}">${item.value}</span>
+                </div>
+            `).join('');
+
+            resultadoDiv.innerHTML = `
+                <div class="animate-fade-in">
+                    <h2 class="text-xl font-bold text-center text-gray-800 mb-4">${title}</h2>
+                    <div class="space-y-3">
+                        ${itemsHtml}
+                        <div class="flex justify-between p-4 bg-blue-100 rounded-lg mt-4">
+                            <span class="font-bold text-blue-800">${total.label}</span>
+                            <span class="font-bold text-blue-800 text-lg">${total.value}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Displays an informational message in the results area.
+         * @param {string} message - The message to display.
+         */
+        function showInfo(message) {
+            resultadoDiv.innerHTML = `
+                <div class="animate-fade-in text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 class="font-semibold text-blue-800">Informação</h3>
+                    <p class="text-blue-700 mt-1">${message}</p>
+                </div>`;
+        }
+
+        /**
+         * Displays an error message in the results area.
+         * @param {string} message - The error message.
+         */
+        function showError(message) {
+             resultadoDiv.innerHTML = `
+                <div class="animate-fade-in text-center p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h3 class="font-semibold text-red-800">Erro</h3>
+                    <p class="text-red-700 mt-1">${message}</p>
+                </div>`;
+        }
+
+    </script>
+</body>
+</html>
